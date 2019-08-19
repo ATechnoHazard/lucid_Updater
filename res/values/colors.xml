@@ -2,8 +2,11 @@
 <resources>
     <color name="theme_primary">#f5f5f5</color>
     <color name="theme_primary_dark">#e0e0e0</color>
-    <color name="theme_accent">#167c80</color>
+    <color name="theme_accent">#7bec78</color>
 
     <color name="inverted">#212121</color>
     <color name="ic_background">#333333</color>
+
+    <color name="standard_dark">#303030</color>
+    <color name="cardview_dark">#FF424242</color>
 </resources>

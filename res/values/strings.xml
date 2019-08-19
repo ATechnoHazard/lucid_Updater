@@ -20,11 +20,11 @@
 
     <!-- Directory where the update files will be downloaded and stored.
          WARNING: The application can and will delete any unknown file. -->
-    <string name="download_path" translatable="false">/data/lineageos_updates/</string>
+    <string name="download_path" translatable="false">/data/lucid_updates/</string>
 
     <!-- Directory where the downloads will be exported to.
          The path is relative to the root of the external storage.-->
-    <string name="export_path" translatable="false">LineageOS updates/</string>
+    <string name="export_path" translatable="false">Lucid updates/</string>
 
     <!--
         Optional placeholders replaced at runtime:
@@ -88,7 +88,7 @@
 
     <string name="snack_update_not_installable">This update can\'t be installed on top of the current build.</string>
 
-    <string name="header_title_text">LineageOS\n%1$s</string>
+    <string name="header_title_text">Lucid\n%1$s</string>
     <string name="header_android_version">Android <xliff:g id="version" example="7.1.2">%1$s</xliff:g></string>
     <string name="header_last_updates_check">Last checked: <xliff:g id="date" example="1 January 1970">%1$s</xliff:g> (<xliff:g id="time" example="01:23">%2$s</xliff:g>)</string>
 
@@ -150,4 +150,10 @@
     <string name="new_updates_channel_title">New updates</string>
     <string name="ongoing_channel_title">Ongoing downloads</string>
     <string name="update_failed_channel_title">Update failed</string>
+    <string name="checking_for_updates">Checking for updates…</string>
+    <string name="current_build_card_text">Current build</string>
+    <string name="no_updates_available">No updates available.</string>
+    <string name="update_available">Update available!</string>
+    <string name="update_check_failed">Update check\nfailed.</string>
+    <string name="update_verification_failed">Update verification\nfailed.</string>
 </resources>
