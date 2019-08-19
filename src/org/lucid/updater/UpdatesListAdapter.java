@@ -95,14 +95,14 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
 
         public ViewHolder(final View view) {
             super(view);
-            mAction = (Button) view.findViewById(R.id.update_action);
+            mAction = view.findViewById(R.id.update_action);
 
-            mBuildDate = (TextView) view.findViewById(R.id.build_date);
-            mBuildVersion = (TextView) view.findViewById(R.id.build_version);
-            mBuildSize = (TextView) view.findViewById(R.id.build_size);
+            mBuildDate = view.findViewById(R.id.build_date);
+            mBuildVersion = view.findViewById(R.id.build_version);
+            mBuildSize = view.findViewById(R.id.build_size);
 
-            mProgressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
-            mProgressText = (TextView) view.findViewById(R.id.progress_text);
+            mProgressBar = view.findViewById(R.id.progress_bar);
+            mProgressText = view.findViewById(R.id.progress_text);
         }
     }
 
@@ -137,6 +137,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
             String total = Formatter.formatShortFileSize(mActivity, update.getFileSize());
             String percentage = NumberFormat.getPercentInstance().format(
                     update.getProgress() / 100.f);
+
             long eta = update.getEta();
             if (eta > 0) {
                 CharSequence etaString = StringGenerator.formatETA(mActivity, eta * 1000);
@@ -147,9 +148,11 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
                 viewHolder.mProgressText.setText(mActivity.getString(
                         R.string.list_download_progress_new, downloaded, total, percentage));
             }
+
             setButtonAction(viewHolder.mAction, Action.PAUSE, downloadId, true);
             viewHolder.mProgressBar.setIndeterminate(update.getStatus() == UpdateStatus.STARTING);
             viewHolder.mProgressBar.setProgress(update.getProgress());
+
         } else if (mUpdaterController.isInstallingUpdate(downloadId)) {
             setButtonAction(viewHolder.mAction, Action.CANCEL_INSTALLATION, downloadId, true);
             boolean notAB = !mUpdaterController.isInstallingABUpdate();
@@ -171,6 +174,7 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
             String total = Formatter.formatShortFileSize(mActivity, update.getFileSize());
             String percentage = NumberFormat.getPercentInstance().format(
                     update.getProgress() / 100.f);
+
             viewHolder.mProgressText.setText(mActivity.getString(R.string.list_download_progress_new,
                     downloaded, total, percentage));
             viewHolder.mProgressBar.setIndeterminate(false);

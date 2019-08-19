@@ -27,28 +27,25 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.appcompat.app.AlertDialog;
-import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
-import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
+
+import com.google.android.material.bottomappbar.BottomAppBar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
 import org.lucid.updater.controller.UpdaterController;
@@ -69,24 +66,24 @@ import java.util.UUID;
 public class UpdatesActivity extends UpdatesListActivity {
 
     private static final String TAG = "UpdatesActivity";
-    private UpdaterService mUpdaterService;
-    private BroadcastReceiver mBroadcastReceiver;
+    private UpdaterService updaterService;
+    private BroadcastReceiver broadcastReceiver;
 
-    private UpdatesListAdapter mAdapter;
-
-    private View mRefreshIconView;
-    private RotateAnimation mRefreshAnimation;
+    private UpdatesListAdapter updatesListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_updates);
+        BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
+        setSupportActionBar(bottomAppBar);
+
+        bottomAppBar.replaceMenu(R.menu.menu_toolbar);
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
-        mAdapter = new UpdatesListAdapter(this);
-        recyclerView.setAdapter(mAdapter);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        updatesListAdapter = new UpdatesListAdapter(this);
+        recyclerView.setAdapter(updatesListAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         RecyclerView.ItemAnimator animator = recyclerView.getItemAnimator();
         if (animator instanceof SimpleItemAnimator) {
             ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
@@ -95,20 +92,20 @@ public class UpdatesActivity extends UpdatesListActivity {
         FloatingActionButton refreshFab = findViewById(R.id.fab);
         refreshFab.setOnClickListener(view -> downloadUpdatesList(true));
 
-        mBroadcastReceiver = new BroadcastReceiver() {
+        broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (UpdaterController.ACTION_UPDATE_STATUS.equals(intent.getAction())) {
                     String downloadId = intent.getStringExtra(UpdaterController.EXTRA_DOWNLOAD_ID);
                     handleDownloadStatusChange(downloadId);
-                    mAdapter.notifyDataSetChanged();
+                    updatesListAdapter.notifyDataSetChanged();
                 } else if (UpdaterController.ACTION_DOWNLOAD_PROGRESS.equals(intent.getAction()) ||
                         UpdaterController.ACTION_INSTALL_PROGRESS.equals(intent.getAction())) {
                     String downloadId = intent.getStringExtra(UpdaterController.EXTRA_DOWNLOAD_ID);
-                    mAdapter.notifyItemChanged(downloadId);
+                    updatesListAdapter.notifyItemChanged(downloadId);
                 } else if (UpdaterController.ACTION_UPDATE_REMOVED.equals(intent.getAction())) {
                     String downloadId = intent.getStringExtra(UpdaterController.EXTRA_DOWNLOAD_ID);
-                    mAdapter.removeItem(downloadId);
+                    updatesListAdapter.removeItem(downloadId);
                 }
             }
         };
@@ -120,19 +117,15 @@ public class UpdatesActivity extends UpdatesListActivity {
         headerBuildVersion.setText(
                 getString(R.string.header_android_version, Build.VERSION.RELEASE));
 
+        String deviceName;
+        deviceName = BuildInfoUtils.getDeviceName();
+
+        TextView headerDeviceName = findViewById(R.id.device_name);
+        headerDeviceName.setText(deviceName);
+
         TextView headerBuildDate = findViewById(R.id.header_build_date);
         headerBuildDate.setText(StringGenerator.getDateLocalizedUTC(this,
                 DateFormat.LONG, BuildInfoUtils.getBuildDateTimestamp()));
-
-        // Switch between header title and appbar title minimizing overlaps
-//        if (!Utils.hasTouchscreen(this)) {
-//            // This can't be collapsed without a touchscreen
-//        }
-
-        mRefreshAnimation = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f);
-        mRefreshAnimation.setInterpolator(new LinearInterpolator());
-        mRefreshAnimation.setDuration(1000);
     }
 
     @Override
@@ -147,13 +140,13 @@ public class UpdatesActivity extends UpdatesListActivity {
         intentFilter.addAction(UpdaterController.ACTION_DOWNLOAD_PROGRESS);
         intentFilter.addAction(UpdaterController.ACTION_INSTALL_PROGRESS);
         intentFilter.addAction(UpdaterController.ACTION_UPDATE_REMOVED);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, intentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, intentFilter);
     }
 
     @Override
     public void onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
-        if (mUpdaterService != null) {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        if (updaterService != null) {
             unbindService(mConnection);
         }
         super.onStop();
@@ -168,10 +161,6 @@ public class UpdatesActivity extends UpdatesListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.menu_refresh: {
-                downloadUpdatesList(true);
-                return true;
-            }
             case R.id.menu_preferences: {
                 showPreferencesDialog();
                 return true;
@@ -196,25 +185,25 @@ public class UpdatesActivity extends UpdatesListActivity {
 
         @Override
         public void onServiceConnected(ComponentName className,
-                IBinder service) {
+                                       IBinder service) {
             UpdaterService.LocalBinder binder = (UpdaterService.LocalBinder) service;
-            mUpdaterService = binder.getService();
-            mAdapter.setUpdaterController(mUpdaterService.getUpdaterController());
+            updaterService = binder.getService();
+            updatesListAdapter.setUpdaterController(updaterService.getUpdaterController());
             getUpdatesList();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            mAdapter.setUpdaterController(null);
-            mUpdaterService = null;
-            mAdapter.notifyDataSetChanged();
+            updatesListAdapter.setUpdaterController(null);
+            updaterService = null;
+            updatesListAdapter.notifyDataSetChanged();
         }
     };
 
     private void loadUpdatesList(File jsonFile, boolean manualRefresh)
             throws IOException, JSONException {
         Log.d(TAG, "Adding remote updates");
-        UpdaterController controller = mUpdaterService.getUpdaterController();
+        UpdaterController controller = updaterService.getUpdaterController();
         boolean newUpdates = false;
 
         List<UpdateInfo> updates = Utils.parseJson(jsonFile, true);
@@ -237,17 +226,17 @@ public class UpdatesActivity extends UpdatesListActivity {
         List<String> updateIds = new ArrayList<>();
         List<UpdateInfo> sortedUpdates = controller.getUpdates();
         if (sortedUpdates.isEmpty()) {
-            ((TextView)findViewById(R.id.header_title)).setText(getString(R.string.no_updates_available));
+            ((TextView) findViewById(R.id.header_title)).setText(getString(R.string.no_updates_available));
             findViewById(R.id.recycler_view).setVisibility(View.GONE);
         } else {
-            ((TextView)findViewById(R.id.header_title)).setText(getString(R.string.update_available));
+            ((TextView) findViewById(R.id.header_title)).setText(getString(R.string.update_available));
             findViewById(R.id.recycler_view).setVisibility(View.VISIBLE);
             sortedUpdates.sort((u1, u2) -> Long.compare(u2.getTimestamp(), u1.getTimestamp()));
             for (UpdateInfo update : sortedUpdates) {
                 updateIds.add(update.getDownloadId());
             }
-            mAdapter.setData(updateIds);
-            mAdapter.notifyDataSetChanged();
+            updatesListAdapter.setData(updateIds);
+            updatesListAdapter.notifyDataSetChanged();
         }
     }
 
@@ -277,6 +266,7 @@ public class UpdatesActivity extends UpdatesListActivity {
             }
             // In case we set a one-shot check because of a previous failure
             UpdatesCheckReceiver.cancelUpdatesCheck(this);
+            //noinspection ResultOfMethodCallIgnored
             jsonNew.renameTo(json);
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Could not read json", e);
@@ -287,10 +277,6 @@ public class UpdatesActivity extends UpdatesListActivity {
 
     private void setHeaderText(int resId) {
         ((TextView) findViewById(R.id.header_title)).setText(getString(resId));
-    }
-
-    private void setHeaderText(String text) {
-        ((TextView) findViewById(R.id.header_title)).setText(text);
     }
 
     private void downloadUpdatesList(final boolean manualRefresh) {
@@ -309,13 +295,12 @@ public class UpdatesActivity extends UpdatesListActivity {
                         showSnackbar(R.string.snack_updates_check_failed, Snackbar.LENGTH_LONG);
                         setHeaderText(R.string.update_check_failed);
                     }
-                    refreshAnimationStop();
                 });
             }
 
             @Override
             public void onResponse(int statusCode, String url,
-                    DownloadClient.Headers headers) {
+                                   DownloadClient.Headers headers) {
             }
 
             @Override
@@ -323,7 +308,6 @@ public class UpdatesActivity extends UpdatesListActivity {
                 runOnUiThread(() -> {
                     Log.d(TAG, "List downloaded");
                     processNewJson(jsonFile, jsonFileTmp, manualRefresh);
-                    refreshAnimationStop();
                 });
             }
         };
@@ -342,12 +326,11 @@ public class UpdatesActivity extends UpdatesListActivity {
             return;
         }
 
-        refreshAnimationStart();
         downloadClient.start();
     }
 
     private void handleDownloadStatusChange(String downloadId) {
-        UpdateInfo update = mUpdaterService.getUpdaterController().getUpdate(downloadId);
+        UpdateInfo update = updaterService.getUpdaterController().getUpdate(downloadId);
         switch (update.getStatus()) {
             case PAUSED_ERROR:
                 showSnackbar(R.string.snack_download_failed, Snackbar.LENGTH_LONG);
@@ -367,24 +350,6 @@ public class UpdatesActivity extends UpdatesListActivity {
     @Override
     public void showSnackbar(int stringId, int duration) {
         Snackbar.make(findViewById(R.id.main_container), stringId, duration).show();
-    }
-
-    private void refreshAnimationStart() {
-        if (mRefreshIconView == null) {
-            mRefreshIconView = findViewById(R.id.menu_refresh);
-        }
-        if (mRefreshIconView != null) {
-            mRefreshAnimation.setRepeatCount(Animation.INFINITE);
-            mRefreshIconView.startAnimation(mRefreshAnimation);
-            mRefreshIconView.setEnabled(false);
-        }
-    }
-
-    private void refreshAnimationStop() {
-        if (mRefreshIconView != null) {
-            mRefreshAnimation.setRepeatCount(0);
-            mRefreshIconView.setEnabled(true);
-        }
     }
 
     private void showPreferencesDialog() {
@@ -428,7 +393,7 @@ public class UpdatesActivity extends UpdatesListActivity {
                     }
 
                     boolean enableABPerfMode = abPerfMode.isChecked();
-                    mUpdaterService.getUpdaterController().setPerformanceMode(enableABPerfMode);
+                    updaterService.getUpdaterController().setPerformanceMode(enableABPerfMode);
                 })
                 .show();
     }
