@@ -8,6 +8,7 @@
         <item name="android:windowBackground">@color/standard_dark</item>
         <item name="android:windowLightStatusBar">@bool/theme_is_light</item>
         <item name="android:windowLightNavigationBar">@bool/theme_is_light</item>
+        <item name="android:fontFamily">@font/gilroy_extrabold</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

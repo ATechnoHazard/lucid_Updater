@@ -15,6 +15,7 @@
  */
 package org.lucid.updater;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,6 +23,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.icu.text.DateFormat;
 import android.net.Uri;
 import android.os.Build;
@@ -32,9 +36,11 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -46,6 +52,8 @@ import androidx.recyclerview.widget.SimpleItemAnimator;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.madrapps.pikolo.ColorPicker;
+import com.madrapps.pikolo.listeners.SimpleColorSelectionListener;
 
 import org.json.JSONException;
 import org.lucid.updater.controller.UpdaterController;
@@ -70,6 +78,11 @@ public class UpdatesActivity extends UpdatesListActivity {
     private BroadcastReceiver broadcastReceiver;
 
     private UpdatesListAdapter updatesListAdapter;
+    private static int selectedColor = 0;
+
+    public static int getSelectedColor() {
+        return selectedColor;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +90,8 @@ public class UpdatesActivity extends UpdatesListActivity {
         setContentView(R.layout.activity_updates);
         BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
         setSupportActionBar(bottomAppBar);
+        selectedColor = PreferenceManager.getDefaultSharedPreferences(this).
+                getInt(Constants.PREF_ACCENT_COLOR, Color.rgb(94, 151, 246));
 
         bottomAppBar.replaceMenu(R.menu.menu_toolbar);
 
@@ -88,6 +103,8 @@ public class UpdatesActivity extends UpdatesListActivity {
         if (animator instanceof SimpleItemAnimator) {
             ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
         }
+
+        setViewColors(selectedColor);
 
         FloatingActionButton refreshFab = findViewById(R.id.fab);
         refreshFab.setOnClickListener(view -> downloadUpdatesList(true));
@@ -114,8 +131,7 @@ public class UpdatesActivity extends UpdatesListActivity {
         headerTitle.setText(getString(R.string.checking_for_updates));
 
         TextView headerBuildVersion = findViewById(R.id.header_build_version);
-        headerBuildVersion.setText(
-                getString(R.string.header_android_version, Build.VERSION.RELEASE));
+        headerBuildVersion.setText(getString(R.string.header_android_version, Build.VERSION.RELEASE));
 
         String deviceName;
         deviceName = BuildInfoUtils.getDeviceName();
@@ -126,6 +142,16 @@ public class UpdatesActivity extends UpdatesListActivity {
         TextView headerBuildDate = findViewById(R.id.header_build_date);
         headerBuildDate.setText(StringGenerator.getDateLocalizedUTC(this,
                 DateFormat.LONG, BuildInfoUtils.getBuildDateTimestamp()));
+    }
+
+    private void setViewColors(int selectedColor) {
+        TextView currentBuild = findViewById(R.id.current_build_text);
+        FloatingActionButton refreshButton = findViewById(R.id.fab);
+        TextView headerTitle = findViewById(R.id.header_title);
+
+        currentBuild.setTextColor(selectedColor);
+        refreshButton.setBackgroundTintList(ColorStateList.valueOf(selectedColor));
+        headerTitle.setTextColor(selectedColor);
     }
 
     @Override
@@ -353,12 +379,42 @@ public class UpdatesActivity extends UpdatesListActivity {
     }
 
     private void showPreferencesDialog() {
-        View view = LayoutInflater.from(this).inflate(R.layout.preferences_dialog, null);
+        @SuppressLint("InflateParams") View view = LayoutInflater.from(this).inflate(R.layout.preferences_dialog, null);
         Spinner autoCheckInterval =
                 view.findViewById(R.id.preferences_auto_updates_check_interval);
         Switch autoDelete = view.findViewById(R.id.preferences_auto_delete_updates);
         Switch dataWarning = view.findViewById(R.id.preferences_mobile_data_warning);
         Switch abPerfMode = view.findViewById(R.id.preferences_ab_perf_mode);
+        ImageView colorPreview = view.findViewById(R.id.color_preview);
+        ColorPicker colorPicker = view.findViewById(R.id.color_picker);
+
+        autoDelete.setThumbTintList(ColorStateList.valueOf(selectedColor));
+        autoDelete.setTrackTintList(ColorStateList.valueOf(selectedColor));
+
+        dataWarning.setThumbTintList(ColorStateList.valueOf(selectedColor));
+        dataWarning.setTrackTintList(ColorStateList.valueOf(selectedColor));
+
+        abPerfMode.setThumbTintList(ColorStateList.valueOf(selectedColor));
+        abPerfMode.setTrackTintList(ColorStateList.valueOf(selectedColor));
+
+        colorPicker.setColorSelectionListener(new SimpleColorSelectionListener() {
+            @Override
+            public void onColorSelected(int color) {
+                colorPreview.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+                selectedColor = color;
+                autoDelete.setThumbTintList(ColorStateList.valueOf(selectedColor));
+                autoDelete.setTrackTintList(ColorStateList.valueOf(selectedColor));
+
+                dataWarning.setThumbTintList(ColorStateList.valueOf(selectedColor));
+                dataWarning.setTrackTintList(ColorStateList.valueOf(selectedColor));
+
+                abPerfMode.setThumbTintList(ColorStateList.valueOf(selectedColor));
+                abPerfMode.setTrackTintList(ColorStateList.valueOf(selectedColor));
+                setViewColors(selectedColor);
+            }
+        });
+
+
 
         if (!Utils.isABDevice()) {
             abPerfMode.setVisibility(View.GONE);
@@ -369,6 +425,9 @@ public class UpdatesActivity extends UpdatesListActivity {
         autoDelete.setChecked(prefs.getBoolean(Constants.PREF_AUTO_DELETE_UPDATES, false));
         dataWarning.setChecked(prefs.getBoolean(Constants.PREF_MOBILE_DATA_WARNING, true));
         abPerfMode.setChecked(prefs.getBoolean(Constants.PREF_AB_PERF_MODE, false));
+        colorPicker.setColor(prefs.getInt(Constants.PREF_ACCENT_COLOR, Color.rgb(94, 151, 246)));
+        colorPreview.getBackground().setColorFilter(prefs.getInt(Constants.PREF_ACCENT_COLOR,
+                Color.rgb(94, 151, 246)), PorterDuff.Mode.MULTIPLY);
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.menu_preferences)
@@ -383,7 +442,10 @@ public class UpdatesActivity extends UpdatesListActivity {
                                     dataWarning.isChecked())
                             .putBoolean(Constants.PREF_AB_PERF_MODE,
                                     abPerfMode.isChecked())
+                            .putInt(Constants.PREF_ACCENT_COLOR,
+                                    selectedColor)
                             .apply();
+                    setViewColors(selectedColor);
 
                     if (Utils.isUpdateCheckEnabled(this)) {
                         UpdatesCheckReceiver.scheduleRepeatingUpdatesCheck(this);
