@@ -156,4 +156,6 @@
     <string name="update_available">Update available!</string>
     <string name="update_check_failed">Update check\nfailed.</string>
     <string name="update_verification_failed">Update verification\nfailed.</string>
+    <string name="toggle_dark_mode">Toggle dark mode</string>
+    <string name="restart_app_reload">Restart the app to reflect changes.</string>
 </resources>

@@ -87,11 +87,21 @@ public class UpdatesActivity extends UpdatesListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set dark or light theme
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isDark = prefs.getBoolean(Constants.PREF_DARK_MODE, true);
+        if (isDark) {
+            setTheme(R.style.DarkTheme);
+        } else {
+            setTheme(R.style.LightTheme);
+        }
+
         setContentView(R.layout.activity_updates);
         BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
         setSupportActionBar(bottomAppBar);
-        selectedColor = PreferenceManager.getDefaultSharedPreferences(this).
-                getInt(Constants.PREF_ACCENT_COLOR, Color.rgb(94, 151, 246));
+        selectedColor = prefs.getInt(Constants.PREF_ACCENT_COLOR,
+                Color.rgb(94, 151, 246));
 
         bottomAppBar.replaceMenu(R.menu.menu_toolbar);
 
@@ -187,6 +197,13 @@ public class UpdatesActivity extends UpdatesListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.dark_mode_toggle: {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean isDark = prefs.getBoolean(Constants.PREF_DARK_MODE, true);
+                prefs.edit().putBoolean(Constants.PREF_DARK_MODE, !isDark).apply();
+                showSnackbar(R.string.restart_app_reload, Snackbar.LENGTH_LONG);
+                return true;
+            }
             case R.id.menu_preferences: {
                 showPreferencesDialog();
                 return true;

@@ -1,17 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.MaterialComponents">
+
+    <style name="LightTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>
         <item name="colorAccent">@color/theme_accent</item>
-        <item name="windowActionModeOverlay">true</item>
-        <item name="android:windowBackground">@color/standard_dark</item>
         <item name="android:windowLightStatusBar">@bool/theme_is_light</item>
         <item name="android:windowLightNavigationBar">@bool/theme_is_light</item>
         <item name="android:fontFamily">@font/gilroy_extrabold</item>
+        <item name="cardBackgroundColor">#FAFAFA</item>
+        <item name="iconColor">#424242</item>
+        <item name="textColor">#424242</item>
+        <item name="bgColor">#ffffff</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@drawable/window_bg</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
+    <style name="DarkTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/theme_primary</item>
+        <item name="colorPrimaryDark">@color/theme_primary_dark</item>
+        <item name="colorAccent">@color/theme_accent</item>
+        <item name="android:windowLightStatusBar">@bool/theme_is_light</item>
+        <item name="android:windowLightNavigationBar">@bool/theme_is_light</item>
+        <item name="android:fontFamily">@font/gilroy_extrabold</item>
+        <item name="cardBackgroundColor">#424242</item>
+        <item name="iconColor">#FFFFFF</item>
+        <item name="textColor">#424242</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="bgColor">#303030</item>
+        <item name="android:windowBackground">@drawable/window_bg</item>
+    </style>
+
+
+    <style name="LightTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
@@ -24,11 +45,12 @@
     <style name="TextAppearanceInverted" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textColor">@color/inverted</item>
     </style>
+
     <style name="TextAppearanceTransparent" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textColor">@android:color/transparent</item>
     </style>
 
-    <style name="AppTheme.PopupMenuOverlapAnchor">
+    <style name="LightTheme.PopupMenuOverlapAnchor">
         <item name="android:overlapAnchor">true</item>
         <item name="android:dropDownVerticalOffset">8dp</item>
         <item name="android:dropDownHorizontalOffset">-16dp</item>

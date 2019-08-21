@@ -35,6 +35,7 @@ public final class Constants {
     public static final String PREF_MOBILE_DATA_WARNING = "pref_mobile_data_warning";
     public static final String PREF_NEEDS_REBOOT_ID = "needs_reboot_id";
     public static final String PREF_ACCENT_COLOR = "pref_accent_color_updater";
+    public static final String PREF_DARK_MODE = "pref_dark_mode_toggle";
 
     public static final String UNCRYPT_FILE_EXT = ".uncrypt";
 
