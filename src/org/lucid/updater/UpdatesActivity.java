@@ -15,6 +15,7 @@
  */
 package org.lucid.updater;
 
+import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -36,13 +37,16 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -51,6 +55,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.madrapps.pikolo.ColorPicker;
 import com.madrapps.pikolo.listeners.SimpleColorSelectionListener;
@@ -201,7 +206,13 @@ public class UpdatesActivity extends UpdatesListActivity {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean isDark = prefs.getBoolean(Constants.PREF_DARK_MODE, true);
                 prefs.edit().putBoolean(Constants.PREF_DARK_MODE, !isDark).apply();
-                showSnackbar(R.string.restart_app_reload, Snackbar.LENGTH_LONG);
+
+                finish();
+                Intent intent = new Intent(this, getClass());
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 return true;
             }
             case R.id.menu_preferences: {
@@ -392,7 +403,13 @@ public class UpdatesActivity extends UpdatesListActivity {
 
     @Override
     public void showSnackbar(int stringId, int duration) {
-        Snackbar.make(findViewById(R.id.main_container), stringId, duration).show();
+        Snackbar.make(findViewById(R.id.main_container), stringId, duration).setBehavior(
+                new BaseTransientBottomBar.Behavior() {
+            @Override
+            public boolean canSwipeDismissView(View child) {
+                return false;
+            }
+        }).show();
     }
 
     private void showPreferencesDialog() {
@@ -430,7 +447,6 @@ public class UpdatesActivity extends UpdatesListActivity {
                 setViewColors(selectedColor);
             }
         });
-
 
 
         if (!Utils.isABDevice()) {
