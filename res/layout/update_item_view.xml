@@ -15,7 +15,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true">
 
         <TextView
             android:id="@+id/build_version"
@@ -49,7 +50,8 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:progressDrawable="@drawable/custom_progressbar"
-            android:visibility="invisible"
+            android:indeterminateDrawable="@drawable/custom_progressbar"
+            android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@+id/build_date"
             tools:layout_editor_absoluteX="0dp"
             tools:progress="65"
@@ -64,7 +66,7 @@
             android:singleLine="true"
             android:textColor="?android:attr/colorBackgroundFloating"
             android:textSize="12sp"
-            android:visibility="invisible"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/progress_bar"
@@ -83,14 +85,14 @@
             tools:text="300 MB"
             tools:visibility="invisible" />
 
-        <ImageButton
+        <Button
             android:id="@+id/update_action"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:layout_width="24dp"
-            android:layout_height="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_pause"
-            android:tint="?android:attr/colorBackgroundFloating"
+            android:elevation="0dp"
+            android:textColor="?android:attr/colorBackgroundFloating"
+            android:shadowColor="@android:color/transparent"
             app:layout_constraintBottom_toBottomOf="@+id/build_version"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/build_version"

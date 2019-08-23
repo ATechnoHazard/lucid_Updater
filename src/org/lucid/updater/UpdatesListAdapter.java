@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.os.BatteryManager;
 import android.os.PowerManager;
@@ -107,6 +108,8 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
 
             CardView container = view.findViewById(R.id.item_cardview_container);
             container.setCardBackgroundColor(UpdatesActivity.getSelectedColor());
+            action.setBackgroundTintList(ColorStateList.valueOf(UpdatesActivity.getSelectedColor()));
+            action.setStateListAnimator(null);
         }
     }
 
@@ -216,8 +219,8 @@ public class UpdatesListAdapter extends RecyclerView.Adapter<UpdatesListAdapter.
         String fileSize = Formatter.formatShortFileSize(mActivity, update.getFileSize());
         viewHolder.buildSize.setText(fileSize);
 
-        viewHolder.progressBar.setVisibility(View.INVISIBLE);
-        viewHolder.progressText.setVisibility(View.INVISIBLE);
+        viewHolder.progressBar.setVisibility(View.GONE);
+        viewHolder.progressText.setVisibility(View.GONE);
         viewHolder.buildSize.setVisibility(View.VISIBLE);
     }
 

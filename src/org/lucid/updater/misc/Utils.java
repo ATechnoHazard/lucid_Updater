@@ -21,7 +21,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
@@ -37,8 +36,8 @@ import org.json.JSONObject;
 import org.lucid.updater.R;
 import org.lucid.updater.UpdatesDbHelper;
 import org.lucid.updater.controller.UpdaterService;
-import org.lucid.updater.model.UpdateBaseInfo;
 import org.lucid.updater.model.Update;
+import org.lucid.updater.model.UpdateBaseInfo;
 import org.lucid.updater.model.UpdateInfo;
 
 import java.io.BufferedReader;
@@ -50,11 +49,13 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
+    private static boolean isDebug = true;
 
     private static final String TAG = "Utils";
 
@@ -95,6 +96,9 @@ public class Utils {
     }
 
     public static boolean isCompatible(UpdateBaseInfo update) {
+        if (isDebug) {
+            return true;
+        }
         if (update.getVersion().compareTo(SystemProperties.get(Constants.PROP_BUILD_VERSION)) < 0) {
             Log.d(TAG, update.getName() + " is older than current Android version");
             return false;
@@ -108,28 +112,33 @@ public class Utils {
             Log.d(TAG, update.getName() + " has type " + update.getType());
             return false;
         }
+
         return true;
     }
 
     public static boolean canInstall(UpdateBaseInfo update) {
-        return (SystemProperties.getBoolean(Constants.PROP_UPDATER_ALLOW_DOWNGRADING, false) ||
-                update.getTimestamp() > SystemProperties.getLong(Constants.PROP_BUILD_DATE, 0)) &&
-                update.getVersion().equalsIgnoreCase(
-                        SystemProperties.get(Constants.PROP_BUILD_VERSION));
+        if (!isDebug) {
+            return (SystemProperties.getBoolean(Constants.PROP_UPDATER_ALLOW_DOWNGRADING, false) ||
+                    update.getTimestamp() > SystemProperties.getLong(Constants.PROP_BUILD_DATE, 0)) &&
+                    update.getVersion().equalsIgnoreCase(
+                            SystemProperties.get(Constants.PROP_BUILD_VERSION));
+        } else {
+            return true;
+        }
     }
 
     public static List<UpdateInfo> parseJson(File file, boolean compatibleOnly)
             throws IOException, JSONException {
         List<UpdateInfo> updates = new ArrayList<>();
 
-        String json = "";
+        StringBuilder json = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            for (String line; (line = br.readLine()) != null;) {
-                json += line;
+            for (String line; (line = br.readLine()) != null; ) {
+                json.append(line);
             }
         }
 
-        JSONObject obj = new JSONObject(json);
+        JSONObject obj = new JSONObject(json.toString());
         JSONArray updatesList = obj.getJSONArray("response");
         for (int i = 0; i < updatesList.length(); i++) {
             if (updatesList.isNull(i)) {
@@ -151,7 +160,6 @@ public class Utils {
     }
 
     public static String getServerURL(Context context) {
-        String incrementalVersion = SystemProperties.get(Constants.PROP_BUILD_VERSION_INCREMENTAL);
         String device = SystemProperties.get(Constants.PROP_NEXT_DEVICE,
                 SystemProperties.get(Constants.PROP_DEVICE));
         String type = SystemProperties.get(Constants.PROP_RELEASE_TYPE).toLowerCase(Locale.ROOT);
@@ -161,9 +169,15 @@ public class Utils {
             serverUrl = context.getString(R.string.updater_server_url);
         }
 
-        return serverUrl.replace("{device}", device)
-                .replace("{type}", type)
-                .replace("{incr}", incrementalVersion);
+        if (isDebug) {
+            return serverUrl.replace("{device}", "cheeseburger")
+                    .replace("{type}", "testung");
+        } else {
+            return serverUrl.replace("{device}", device)
+                    .replace("{type}", type);
+        }
+
+
     }
 
     public static String getUpgradeBlockedURL(Context context) {
@@ -188,14 +202,14 @@ public class Utils {
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
+        NetworkInfo info = Objects.requireNonNull(cm).getActiveNetworkInfo();
         return !(info == null || !info.isConnected() || !info.isAvailable());
     }
 
     public static boolean isOnWifiOrEthernet(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
+        NetworkInfo info = Objects.requireNonNull(cm).getActiveNetworkInfo();
         return (info != null && (info.getType() == ConnectivityManager.TYPE_ETHERNET
                 || info.getType() == ConnectivityManager.TYPE_WIFI));
     }
@@ -206,8 +220,8 @@ public class Utils {
      * @param oldJson old update list
      * @param newJson new update list
      * @return true if newJson has at least a compatible update not available in oldJson
-     * @throws IOException
-     * @throws JSONException
+     * @throws IOException   IO Exception
+     * @throws JSONException Json Exception
      */
     public static boolean checkForNewUpdates(File oldJson, File newJson)
             throws IOException, JSONException {
@@ -230,7 +244,7 @@ public class Utils {
     /**
      * Get the offset to the compressed data of a file inside the given zip
      *
-     * @param zipFile input zip file
+     * @param zipFile   input zip file
      * @param entryPath full path of the entry
      * @return the offset of the compressed, or -1 if not found
      * @throws IllegalArgumentException if the given entry is not found
@@ -264,6 +278,7 @@ public class Utils {
             return;
         }
         for (File file : uncryptFiles) {
+            //noinspection ResultOfMethodCallIgnored
             file.delete();
         }
     }
@@ -319,6 +334,7 @@ public class Utils {
         for (File file : files) {
             if (!knownPaths.contains(file.getAbsolutePath())) {
                 Log.d(TAG, "Deleting " + file.getAbsolutePath());
+                //noinspection ResultOfMethodCallIgnored
                 file.delete();
             }
         }
@@ -363,21 +379,17 @@ public class Utils {
         return isAB;
     }
 
-    public static boolean hasTouchscreen(Context context) {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
-    }
-
     public static void addToClipboard(Context context, String label, String text, String toastMessage) {
         ClipboardManager clipboard = (ClipboardManager) context.getSystemService(
                 Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, text);
-        clipboard.setPrimaryClip(clip);
+        Objects.requireNonNull(clipboard).setPrimaryClip(clip);
         Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
     }
 
     public static boolean isEncrypted(Context context, File file) {
         StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-        return sm.isEncrypted(file);
+        return Objects.requireNonNull(sm).isEncrypted(file);
     }
 
     public static int getUpdateCheckSetting(Context context) {
